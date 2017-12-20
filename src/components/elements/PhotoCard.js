@@ -1,8 +1,29 @@
 import React from 'react';
 import FontAwesome from 'react-fontawesome';
+import Highlight from './Highlight';
+const reactStringReplace = require('react-string-replace');
 
 const PhotoCard = props => {
-  const { imgLink, username, created, likes, comments, caption, filter } = props;
+  let {
+    imgLink,
+    username,
+    created,
+    likes,
+    comments,
+    caption,
+    filter,
+    searchTerm
+  } = props;
+
+  if (searchTerm) {
+    username = reactStringReplace(username, searchTerm, (match) => {
+      return <Highlight>{match}</Highlight>;
+    });
+
+    caption = reactStringReplace(caption, searchTerm, (match) => {
+      return <Highlight>{match}</Highlight>;
+    });
+  }
 
   return (
     <div className="PhotoCard col-lg-4">

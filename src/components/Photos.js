@@ -118,6 +118,7 @@ class Photos extends Component {
           caption={caption.text}
           filter={photo.filter}
           key={photo.id}
+          searchTerm={this.state.searchTerm}
         />
       );
     });
