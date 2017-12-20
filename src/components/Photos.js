@@ -4,7 +4,14 @@ import { getDateString } from '../helpers/date';
 import photoCollection from '../photos';
 import SortSection from '../components/SortSection';
 import Pagination from '../components/Pagination';
-import { getPhotosByFilter, getPhotosByFilterAndPage, getPhotosByPage } from '../helpers/photo';
+
+import {
+  getPhotosByFilter,
+  getPhotosByFilterAndPage,
+  getPhotosByPage,
+  getOrderedPhotos,
+  findPhotos
+} from '../helpers/photo';
 
 
 class Photos extends Component {
@@ -15,14 +22,18 @@ class Photos extends Component {
       photos: getPhotosByPage(photoCollection.data, 1),
       filter: 'All'
     };
+
     this.onFilterChange = this.onFilterChange.bind(this);
     this.onPageChange = this.onPageChange.bind(this);
+    this.onSortClick = this.onSortClick.bind(this);
+    this.onSearchInput = this.onSearchInput.bind(this);
   }
 
   onFilterChange(e) {
     this.setState({
       filter: e.target.value,
-      photos: getPhotosByFilterAndPage(e.target.value, this.state.page)
+      photos: getPhotosByFilterAndPage(e.target.value, 1, this.state.searchTerm),
+      page: 1
     });
   }
 
@@ -32,20 +43,67 @@ class Photos extends Component {
 
     this.setState({
       page: page,
-      photos: getPhotosByPage(photoCollection.data, page)
+      photos: getOrderedPhotos(
+        getPhotosByFilterAndPage(this.state.filter, page, this.state.searchTerm),
+        this.state.usernameSort
+      )
+    });
+
+    window.scrollTo(0, 0);
+  }
+
+  onSortClick() {
+    let photos;
+
+    if (this.state.usernameSort === 'DESC') {
+
+      photos = getOrderedPhotos(
+        getPhotosByFilter(this.state.filter, this.state.searchTerm),
+        'ASC'
+      );
+
+      this.setState({
+        usernameSort: 'ASC',
+        photos: photos.slice(0, 6),
+        page: 1
+      });
+    } else {
+
+      photos = getOrderedPhotos(
+        getPhotosByFilter(this.state.filter, this.state.searchTerm),
+        'DESC'
+      );
+
+      this.setState({
+        usernameSort: 'DESC',
+        photos: photos.slice(0, 6),
+        page: 1
+      });
+    }
+  }
+
+  onSearchInput(e) {
+    const searchTerm = e.target.value;
+
+    this.setState({
+      page: 1,
+      usernameSort: null,
+      photos: findPhotos(getPhotosByFilter(this.state.filter), searchTerm).slice(0, 6),
+      searchTerm: searchTerm
     });
   }
 
-  // onSortButton(e) {
-  //   if (this.state.usernameSort === 'ASC') {
-  //     this.setState({usernameSort: 'DESC'});
-  //     getOrderedPhotos(//)
-  //   }
-  // }
-
   render() {
+    const filteredPhotos = getPhotosByFilter(this.state.filter);
     const photos = this.state.photos;
-    const photoCount = getPhotosByFilter(this.state.filter).length;
+    let photoCount;
+
+    if (this.state.searchTerm) {
+      photoCount = findPhotos(filteredPhotos, this.state.searchTerm).length;
+    } else {
+      photoCount = filteredPhotos.length;
+    }
+
     const photoCards = photos.map(photo => {
       const created = getDateString(photo.created_time);
       const caption = photo.caption || '';
@@ -64,9 +122,10 @@ class Photos extends Component {
       );
     });
 
+    const paginationCollection = findPhotos(filteredPhotos, this.state.searchTerm);
     const pagination = (
       <Pagination
-        collection={getPhotosByFilter(this.state.filter)}
+        collection={paginationCollection}
         currentPage={this.state.page}
         perPage="6"
         onClick={this.onPageChange}
@@ -75,9 +134,22 @@ class Photos extends Component {
 
     return (
       <div className="Photos container">
-        <SortSection onChange={this.onFilterChange} photoCount={photoCount} pagination={pagination} />
-        {photoCards}
-        {pagination}
+        <SortSection
+          onChange={this.onFilterChange}
+          photoCount={photoCount}
+          pagination={pagination}
+          onSortClick={this.onSortClick}
+          usernameSortType ={this.state.usernameSort}
+          onSearchInput={this.onSearchInput}
+        />
+
+        <section className="PhotoCards">
+          {photoCards}
+        </section>
+
+        <div className="col-md-3 pull-right">
+          {pagination}
+        </div>
       </div>
     );
   }

@@ -21,18 +21,20 @@ const Pagination = ({ collection, currentPage, perPage, onClick }) => {
     );
   }
 
-  for (var i = 1; i <= amountOfPages; i++) {
-    paginationLinks.push(
-      <PaginationLink
-        href={i}
-        onClick={onClick}
-        key={i}
-        value={i}
-        currentPage={currentPage}
-      >
-        {i}
-      </PaginationLink>
-    );
+  if (amountOfPages > 1) {
+    for (var i = 1; i <= amountOfPages; i++) {
+      paginationLinks.push(
+        <PaginationLink
+          href={i}
+          onClick={onClick}
+          key={i}
+          value={i}
+          currentPage={currentPage}
+        >
+          {i}
+        </PaginationLink>
+      );
+    }
   }
 
   // if there is a next page
